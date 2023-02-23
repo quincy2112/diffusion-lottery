@@ -29,9 +29,10 @@ class DDIMScheduler:
         beta_end=0.02,
         beta_schedule="cosine",
         clip_sample=True,
-        set_alpha_to_one=True
+        set_alpha_to_one=True, 
+        device= None
     ):
-
+        self.device = device
         if beta_schedule == "linear":
             self.betas = np.linspace(beta_start, beta_end, num_train_timesteps, dtype=np.float32)
         elif beta_schedule == "cosine":
@@ -45,7 +46,7 @@ class DDIMScheduler:
         self.num_train_timesteps = num_train_timesteps
         self.clip_sample = clip_sample
         self.alphas = 1.0 - self.betas
-        self.alphas_cumprod = np.cumprod(self.alphas, axis=0)
+        self.alphas_cumprod = np.cumprod(self.alphas, axis=0).to(device)
 
         self.final_alpha_cumprod = np.array(1.0) if set_alpha_to_one else self.alphas_cumprod[0]
 
@@ -53,9 +54,9 @@ class DDIMScheduler:
         self.timesteps = np.arange(0, num_train_timesteps)[::-1].copy()
 
     def _get_variance(self, timestep, prev_timestep):
-        alpha_prod_t = self.alphas_cumprod[timestep]
+        alpha_prod_t = self.alphas_cumprod[timestep].cpu()
         alpha_prod_t_prev = self.alphas_cumprod[
-            prev_timestep] if prev_timestep >= 0 else self.final_alpha_cumprod
+            prev_timestep].cpu() if prev_timestep >= 0 else self.final_alpha_cumprod
         beta_prod_t = 1 - alpha_prod_t
         beta_prod_t_prev = 1 - alpha_prod_t_prev
 

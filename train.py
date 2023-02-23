@@ -21,16 +21,19 @@ from torchinfo import summary
 from scheduler import DDIMScheduler
 from model import UNet
 from utils import save_images, normalize_to_neg_one_to_one, plot_losses
-
+from datetime import datetime
 
 n_timesteps = 1000
 n_inference_timesteps = 50
 
 
 def main(args):
+    timestamp = datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
     model = UNet(3, image_size=args.resolution, hidden_dims=[16, 32, 64, 128])
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     noise_scheduler = DDIMScheduler(num_train_timesteps=n_timesteps,
-                                    beta_schedule="cosine")
+                                    beta_schedule="cosine", device=device)
 
     optimizer = torch.optim.AdamW(
         model.parameters(),
@@ -78,7 +81,6 @@ def main(args):
         args.gradient_accumulation_steps,
     )
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
     summary(model, [(1, 3, args.resolution, args.resolution), (1,)], verbose=1)
 
@@ -138,7 +140,7 @@ def main(args):
                     output_type="numpy")
                 
                 save_images(generated_images, epoch, args)
-                plot_losses(losses, f"{args.loss_logs_dir}/{epoch}/")
+                plot_losses(losses, f"{args.loss_logs_dir}_{timestamp}/{epoch}/")
 
                 torch.save(
                     {
