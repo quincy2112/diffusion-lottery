@@ -4,6 +4,11 @@ from datetime import datetime
 import torch
 import torch.nn.functional as F
 from torch.nn.utils import clip_grad_norm_
+from torchmetrics.image.fid import FrechetInceptionDistance
+import numpy as np
+import os
+
+import time
 
 from torchvision.transforms import (
     CenterCrop,
@@ -72,6 +77,12 @@ def main(args):
     train_dataloader = torch.utils.data.DataLoader(dataset,
                                                    batch_size=args.train_batch_size,
                                                    shuffle=True)
+    
+    fid_dataloader = torch.utils.data.DataLoader(dataset,
+                                                   batch_size=4096,
+                                                   shuffle=False,
+                                                    )
+    real_image_samples = next(iter(train_dataloader))['input']
 
     lr_scheduler = get_scheduler(
         args.lr_scheduler,
@@ -80,6 +91,13 @@ def main(args):
         num_training_steps=(len(train_dataloader) * args.num_epochs) //
         args.gradient_accumulation_steps,
     )
+    
+    if not os.path.exists("logs"):
+        os.mkdir("logs")
+        
+    log_filename = "logs/log_" + str(time.time_ns() // 1_000_000) + ".csv"
+    with open(log_filename, "a") as file:
+        file.write("epoch,fid\n")
 
     model = model.to(device)
     summary(model, [(1, 3, args.resolution, args.resolution), (1,)], verbose=1)
@@ -139,9 +157,20 @@ def main(args):
                     batch_size=args.eval_batch_size,
                     output_type="numpy")
                 
+                fid = FrechetInceptionDistance(feature=64, normalize=False)
+                
+                fid.update(torch.tensor(256*np.moveaxis(generated_images['sample'], -1, 1)).to(torch.uint8), real=False)
+                fid.update((256*real_image_samples).to(torch.uint8), real=True)
+                
+                with open(log_filename, "a") as file:
+                    file.write(str(epoch) + "," + str(fid.compute().item()) + "\n")
+                
                 save_images(generated_images, epoch, args)
                 plot_losses(losses, f"{args.loss_logs_dir}_{timestamp}/{epoch}/")
 
+                if not os.path.exists("trained_models"):
+                    os.mkdir("trained_models")
+        
                 torch.save(
                     {
                         'model_state': model.state_dict(),
