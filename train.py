@@ -140,7 +140,6 @@ def main(args):
 
             progress_bar.set_postfix(**logs)
             global_step += 1
-            break
         progress_bar.close()
         losses.append(losses_log / (step + 1))
 
