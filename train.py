@@ -97,7 +97,7 @@ def main(args):
         
     log_filename = "logs/log_" + str(time.time_ns() // 1_000_000) + ".csv"
     with open(log_filename, "a") as file:
-        file.write("epoch,fid\n")
+        file.write("epoch,fid,train_loss\n")
 
     model = model.to(device)
     summary(model, [(1, 3, args.resolution, args.resolution), (1,)], verbose=1)
@@ -140,6 +140,7 @@ def main(args):
 
             progress_bar.set_postfix(**logs)
             global_step += 1
+            break
         progress_bar.close()
         losses.append(losses_log / (step + 1))
 
@@ -163,7 +164,7 @@ def main(args):
                 fid.update((256*real_image_samples).to(torch.uint8), real=True)
                 
                 with open(log_filename, "a") as file:
-                    file.write(str(epoch) + "," + str(fid.compute().item()) + "\n")
+                    file.write(str(epoch) + "," + str(fid.compute().item()) + "," + str(losses[-1]) + "\n")
                 
                 save_images(generated_images, epoch, args)
                 plot_losses(losses, f"{args.loss_logs_dir}_{timestamp}/{epoch}/")
