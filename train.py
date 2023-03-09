@@ -118,10 +118,9 @@ def main(args):
         )
 
         for epoch in range(args.LTH_epochs_per_rounds):
+            progress_bar = tqdm(total=len(train_dataloader))
+            progress_bar.set_description(f"Epoch {epoch}")
             for step, batch in enumerate(train_dataloader):
-                progress_bar = tqdm(total=len(train_dataloader))
-                progress_bar.set_description(f"Epoch {epoch}")
-                
                 optimizer.zero_grad()
                 clean_images = batch["input"].to(device)
                 clean_images = normalize_to_neg_one_to_one(clean_images)
@@ -305,10 +304,10 @@ if __name__ == "__main__":
     parser.add_argument("--learning_rate", type=float, default=1e-3)
     parser.add_argument("--lr_scheduler", type=str, default="cosine")
     parser.add_argument("--lr_warmup_steps", type=int, default=500)
-    parser.add_argument("--adam_beta1", type=float, default=0.95)
+    parser.add_argument("--adam_beta1", type=float, default=0.9)
     parser.add_argument("--adam_beta2", type=float, default=0.999)
     parser.add_argument("--adam_weight_decay", type=float, default=0)
-    parser.add_argument("--adam_epsilon", type=float, default=1e-08)
+    parser.add_argument("--adam_epsilon", type=float, default=1e-7)
     parser.add_argument("--use_clip_grad", type=bool, default=False)
     parser.add_argument("--logging_dir", type=str, default="logs")
 
