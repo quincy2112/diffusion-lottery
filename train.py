@@ -27,6 +27,7 @@ from scheduler import DDIMScheduler
 from model import UNet
 from utils import save_images, normalize_to_neg_one_to_one, plot_losses
 from datetime import datetime
+import bisect
 
 n_timesteps = 1000
 n_inference_timesteps = 50
@@ -155,8 +156,11 @@ def main(args):
             all_weights.extend(filtered_params.flatten().tolist())
                 
         sorted_arr = sorted(all_weights)
-        while sorted_arr[0] == 0:
-            sorted_arr.pop(0)
+        
+        #print(len(sorted_arr), bisect.bisect(sorted_arr, 0))
+        sorted_arr = sorted_arr[bisect.bisect(sorted_arr, 0):]
+        
+        #print(len(sorted_arr))
             
         threshold = sorted_arr[int(len(sorted_arr)*prune_percent_per_LTH_round)]
             
@@ -273,14 +277,14 @@ def main(args):
                 save_images(generated_images, epoch, args)
                 plot_losses(losses, f"{args.loss_logs_dir}_{timestamp}/{epoch}/")
 
-                if not os.path.exists("trained_models"):
-                    os.mkdir("trained_models")
+                #if not os.path.exists("trained_models"):
+                #    os.mkdir("trained_models")
         
-                torch.save(
-                    {
-                        'model_state': model.state_dict(),
-                        'optimizer_state': optimizer.state_dict(),
-                    }, args.output_dir)
+                #torch.save(
+                #    {
+                #        'model_state': model.state_dict(),
+                #        'optimizer_state': optimizer.state_dict(),
+                #    }, args.output_dir)
 
 
 if __name__ == "__main__":
