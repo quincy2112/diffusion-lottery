@@ -274,7 +274,7 @@ def main(args):
                 with open(log_filename, "a") as file:
                     file.write(str(epoch) + "," + str(fid.compute().item()) + "," + str(losses[-1]) + "\n")
                 
-                save_images(generated_images, epoch, args)
+                save_images(generated_images, epoch, args, title=str(args.LTH_prune_percent) + "_" + str(epoch))
                 plot_losses(losses, f"{args.loss_logs_dir}_{timestamp}/{epoch}/")
 
                 #if not os.path.exists("trained_models"):

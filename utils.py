@@ -16,20 +16,19 @@ def plot_losses(losses, out_dir):
     plt.clf()
 
 
-def save_images(generated_images, epoch, args):
+def save_images(generated_images, epoch, args, title=""):
     images = generated_images["sample"]
     images_processed = (images * 255).round().astype("uint8")
     
-    current_date = datetime.today().strftime('%Y%m%d_%H%M%S')
-    out_dir = f"./{args.samples_dir}/{current_date}_{args.dataset_name}_{epoch}/"
+    out_dir = f"./final_images/"
     os.makedirs(out_dir)
     for idx, image in enumerate(images_processed):
         image = Image.fromarray(image)
-        image.save(f"{out_dir}/{epoch}_{idx}.jpeg")
+        image.save(f"{out_dir}/{title}_{idx}.png")
 
-    utils.save_image(generated_images["sample_pt"],
-                        f"{out_dir}/{epoch}_grid.jpeg",
-                        nrow=args.eval_batch_size // 4)
+    # utils.save_image(generated_images["sample_pt"],
+    #                     f"{out_dir}/{title}",
+    #                     nrow=args.eval_batch_size // 4)
 
 
 def normalize_to_neg_one_to_one(img):
